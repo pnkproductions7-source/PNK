@@ -2,6 +2,7 @@ backend:
   name: github
   repo: pnkproductions7-source/PNK
   branch: main
+  auth_endpoint: api/fallback
 
 media_folder: "static/img/uploads"
 public_folder: "/static/img/uploads"
