@@ -20,18 +20,14 @@ export default async function handler(req, res) {
     );
 
     const data = await response.json();
-    const content = {
-      token: data.access_token,
-      provider: "github",
-    };
 
-    // This script sends the token back to the CMS window and closes the popup
+    // Sends the token back to the CMS window and closes the popup
     res.send(`
       <script>
         (function() {
           function recieveMessage(e) {
             window.opener.postMessage(
-              'authorization:github:success:${JSON.stringify(content)}',
+              'authorization:github:success:${JSON.stringify({ token: data.access_token, provider: "github" })}',
               e.origin
             );
           }
