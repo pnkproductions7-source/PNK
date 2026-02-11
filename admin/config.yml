@@ -2,6 +2,8 @@ backend:
   name: github
   repo: pnkproductions7-source/PNK
   branch: main
+  base_url: https://pnk-steel.vercel.app/ # <--- YOUR PROJECT URL
+  auth_endpoint: api/auth # <--- PATH TO YOUR AUTH FILE
 
 media_folder: "static/img/uploads"
 public_folder: "/static/img/uploads"
