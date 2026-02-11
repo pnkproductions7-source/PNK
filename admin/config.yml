@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: pnkproductions7-source/PNK-project
+  repo: pnkproductions7-source/PNK
   branch: main
 
 media_folder: "static/img/uploads"
