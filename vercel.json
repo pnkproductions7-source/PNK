@@ -1,1 +1,5 @@
-{}
+{
+  "rewrites": [
+    { "source": "/api/fallback", "destination": "/api/fallback.js" }
+  ]
+}
