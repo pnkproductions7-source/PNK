@@ -2,13 +2,25 @@
 <html lang="el">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PNK Admin</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PNK Admin Panel</title>
+
+    <!-- Το link tag αυτό λύνει τα περισσότερα path bugs -->
+    <link rel="cms-config-url" href="/admin/config.yml" type="text/yaml" />
 </head>
 
 <body>
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+    <script>
+        window.CMS_MANUAL_INIT = true;
+    </script>
+
+    <script>
+        CMS.registerBackend('github', window.CMS.backend.GitHub);
+        CMS.init();  // χωρίς configUrl – το link tag το χειρίζεται
+    </script>
 </body>
 
 </html>
