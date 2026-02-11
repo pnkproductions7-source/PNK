@@ -21,7 +21,6 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // Sends the token back to the CMS window and closes the popup
     res.send(`
       <script>
         (function() {

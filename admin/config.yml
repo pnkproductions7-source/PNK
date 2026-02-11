@@ -3,7 +3,7 @@ backend:
   repo: pnkproductions7-source/PNK
   branch: main
   base_url: https://pnk-63fl4t2m5-pnkproductions7-sources-projects.vercel.app
-  auth_endpoint: api/auth.mjs
+  auth_endpoint: api/fallback
 
 media_folder: "static/img/uploads"
 public_folder: "/static/img/uploads"
