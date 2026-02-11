@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="el">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PNK Project Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #333;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-section input[type="text"],
+        .form-section input[type="number"],
+        .form-section input[type="url"],
+        .form-section select,
+        .form-section textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-section textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-section input[type="file"] {
+            padding: 10px 0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save {
+            background: #667eea;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-save:hover {
+            background: #5568d3;
+        }
+
+        .btn-new {
+            background: #48bb78;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-new:hover {
+            background: #38a169;
+        }
+
+        .btn-delete {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #e53e3e;
+        }
+
+        .project-list {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 5px;
+        }
+
+        .project-list h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .project-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+
+        .project-item:hover {
+            background: #edf2f7;
+        }
+
+        .project-item.active {
+            background: #e6fffa;
+            border-left-color: #48bb78;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+            display: block;
+        }
+
+        .alert.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+            display: block;
+        }
+
+        .image-preview {
+            margin-top: 10px;
+            max-width: 300px;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .token-section {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #d0d8f2;
+        }
+        
+        .token-section p {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .token-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .token-input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        
+        .token-input-group button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .token-input-group button:hover {
+            background: #5568d3;
+        }
+        
+        .token-status {
+            margin-top: 10px;
+            font-size: 13px;
+            padding: 8px 10px;
+            border-radius: 3px;
+            display: none;
+        }
+        
+        .token-status.connected {
+            background: #c6f6d5;
+            color: #22543d;
+            display: block;
+        }
+        
+        .token-status.disconnected {
+            background: #fed7d7;
+            color: #742a2a;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📸 PNK Projects Editor</h1>
+            <p>Create and edit your projects easily</p>
+        </div>
+
+        <div class="content">
+            <div class="alert" id="alert"></div>
+            
+            <div class="token-section">
+                <p>🔐 <strong>GitHub Token Required</strong> - Get one at <a href="https://github.com/settings/tokens" target="_blank" style="color: #667eea;">github.com/settings/tokens</a></p>
+                <div class="token-input-group">
+                    <input type="password" id="tokenInput" placeholder="Paste your GitHub token here...">
+                    <button onclick="setToken()">Connect</button>
+                </div>
+                <div class="token-status" id="tokenStatus"></div>
+            </div>
+
+            <div class="project-list">
+                <h3>Your Projects</h3>
+                <div id="projectsList"></div>
+            </div>
+
+            <form id="projectForm">
+                <div class="form-section">
+                    <label for="category">Κατηγορία *</label>
+                    <select id="category" required>
+                        <option value="">Επίλεξε κατηγορία</option>
+                        <option value="mystery">Mystery</option>
+                        <option value="artistic">Artistic</option>
+                        <option value="music">Music</option>
+                        <option value="promo">Promo</option>
+                    </select>
+                </div>
+
+                <div class="form-section">
+                    <label for="title">Τίτλος *</label>
+                    <input type="text" id="title" required placeholder="π.χ. Ονειρική Νύχτα">
+                </div>
+
+                <div class="form-section">
+                    <label for="description">Περιγραφή</label>
+                    <textarea id="description" placeholder="Περίγραψε το project σου..."></textarea>
+                </div>
+
+                <div class="form-section">
+                    <label for="youtube_url">Σύνδεσμος YouTube</label>
+                    <input type="url" id="youtube_url" placeholder="https://youtu.be/XXXXXX">
+                </div>
+
+                <div class="form-section">
+                    <label for="order">Σειρά Εμφάνισης</label>
+                    <input type="number" id="order" min="1" value="1" placeholder="1">
+                </div>
+
+                <div class="form-section">
+                    <label for="thumbnail">Εικόνα (Thumbnail)</label>
+                    <input type="file" id="thumbnail" accept="image/*">
+                    <div id="imagePreview" class="image-preview"></div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn-new" onclick="newProject()">+ Νέο Project</button>
+                    <button type="submit" class="btn-save">💾 Αποθήκευση</button>
+                    <button type="button" class="btn-delete" id="deleteBtn" style="display:none;"
+                        onclick="deleteProject()">🗑️ Διαγραφή</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_ENDPOINT = 'https://api.github.com/repos/pnkproductions7-source/PNK/contents/src/_data/projects';
+
+        let currentFile = null;
+        let projects = [];
+        let currentToken = localStorage.getItem('github_token') || null;
+
+        function setToken() {
+            const token = document.getElementById('tokenInput').value.trim();
+            
+            if (!token) {
+                showAlert('Βάλε το token σου!', 'error');
+                return;
+            }
+            
+            localStorage.setItem('github_token', token);
+            currentToken = token;
+            document.getElementById('tokenInput').value = '';
+            
+            loadProjects();
+        }
+        
+        function updateTokenStatus(connected) {
+            const status = document.getElementById('tokenStatus');
+            if (connected) {
+                status.className = 'token-status connected';
+                status.textContent = '✅ Connected to GitHub';
+            } else {
+                status.className = 'token-status disconnected';
+                status.textContent = '❌ Not connected';
+            }
+        }
+
+        // Check for token on load
+        window.addEventListener('load', async () => {
+            if (currentToken) {
+                updateTokenStatus(true);
+                await loadProjects();
+            } else {
+                updateTokenStatus(false);
+                document.getElementById('projectsList').innerHTML = '<p style="color: #999;">Βάλε το GitHub token σου παραπάνω για να φορτώσεις τα projects</p>';
+
+        async function loadProjects() {
+            try {
+                if (!currentToken) {
+                    showAlert('Βάλε το GitHub token σου!', 'error');
+                    return;
+                }
+                
+                const response = await fetch(API_ENDPOINT, {
+                    headers: { 'Authorization': `token ${currentToken}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load projects');
+
+                const files = await response.json();
+                projects = files.filter(f => f.name.endsWith('.json') && !f.name.includes('placeholder'));
+
+                renderProjectsList();
+            } catch (error) {
+                showAlert('Σφάλμα φόρτωσης projects: ' + error.message, 'error');
+            }
+        }
+
+        function renderProjectsList() {
+            const list = document.getElementById('projectsList');
+            if (projects.length === 0) {
+                list.innerHTML = '<p style="color: #999;">Κανένα project ακόμα. Δημιούργησε ένα καινούργιο!</p>';
+                return;
+            }
+
+            list.innerHTML = projects.map((p, i) => `
+                <div class="project-item" onclick="loadProject('${p.name}')" data-file="${p.name}">
+                    <strong>${p.name.replace('.json', '').replace('artistic-', '').replace('music-', '').replace('mystery-', '').replace('promo-', '')}</strong>
+                </div>
+            `).join('');
+        }
+
+        async function loadProject(filename) {
+            try {
+                const response = await fetch(`${API_ENDPOINT}/${filename}`, {
+                    headers: { 'Authorization': `token ${currentToken}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load project');
+
+                const data = await response.json();
+                const project = JSON.parse(atob(data.content));
+
+                currentFile = filename;
+                document.getElementById('category').value = project.category || '';
+                document.getElementById('title').value = project.title || '';
+                document.getElementById('description').value = project.description || '';
+                document.getElementById('youtube_url').value = project.youtube_url || '';
+                document.getElementById('order').value = project.order || 1;
+
+                if (project.thumbnail) {
+                    document.getElementById('imagePreview').innerHTML = `<img src="${project.thumbnail}" alt="preview">`;
+                }
+
+                document.getElementById('deleteBtn').style.display = 'block';
+                document.querySelectorAll('.project-item').forEach(p => p.classList.remove('active'));
+                document.querySelector(`[data-file="${filename}"]`)?.classList.add('active');
+
+                showAlert('Project φορτώθηκε!', 'success');
+            } catch (error) {
+                showAlert('Σφάλμα φόρτωσης: ' + error.message, 'error');
+            }
+        }
+
+        function newProject() {
+            currentFile = null;
+            document.getElementById('projectForm').reset();
+            document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('deleteBtn').style.display = 'none';
+            document.querySelectorAll('.project-item').forEach(p => p.classList.remove('active'));
+        }
+
+        document.getElementById('projectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const category = document.getElementById('category').value;
+            const title = document.getElementById('title').value;
+
+            if (!category || !title) {
+                showAlert('Κατηγορία και Τίτλος είναι υποχρεωτικά!', 'error');
+                return;
+            }
+
+            const project = {
+                category: category,
+                title: title,
+                description: document.getElementById('description').value,
+                youtube_url: document.getElementById('youtube_url').value,
+                order: parseInt(document.getElementById('order').value) || 1,
+                thumbnail: document.getElementById('imagePreview').querySelector('img')?.src || ''
+            };
+
+            const filename = `${category}-${title.toLowerCase().replace(/\s+/g, '-')}.json`;
+            await saveProject(filename, project);
+        });
+
+        async function saveProject(filename, projectData) {
+            try {
+                if (!currentToken) {
+                    showAlert('Βάλε το GitHub token σου!', 'error');
+                    return;
+                }
+
+                const content = btoa(JSON.stringify(projectData, null, 2));
+                const url = `${API_ENDPOINT}/${filename}`;
+
+                let sha = null;
+                if (currentFile) {
+                    const response = await fetch(`${API_ENDPOINT}/${currentFile}`, {
+                        headers: { 'Authorization': `token ${currentToken}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        sha = data.sha;
+                    }
+                }
+
+                const response = await fetch(`${API_ENDPOINT}/${currentFile || filename}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `${currentFile ? 'Update' : 'Create'} project: ${projectData.title}`,
+                        content: content,
+                        ...(sha && { sha })
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to save');
+
+                showAlert('✅ Project αποθηκεύθηκε!', 'success');
+                await loadProjects();
+                newProject();
+            } catch (error) {
+                showAlert('Σφάλμα αποθήκευσης: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteProject() {
+            if (!currentFile || !confirm('Σίγουρα θες να διαγράψεις το project;')) return;
+
+            try {
+                const response = await fetch(`${API_ENDPOINT}/${currentFile}`, {
+                    headers: { 'Authorization': `token ${currentToken}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to get file info');
+
+                const data = await response.json();
+
+                const deleteResponse = await fetch(`${API_ENDPOINT}/${currentFile}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `token ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Delete project: ${currentFile}`,
+                        sha: data.sha
+                    })
+                });
+
+                if (!deleteResponse.ok) throw new Error('Failed to delete');
+
+                showAlert('✅ Project διαγράφηκε!', 'success');
+                await loadProjects();
+                newProject();
+            } catch (error) {
+                showAlert('Σφάλμα διαγραφής: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type}`;
+            setTimeout(() => alert.classList.remove(type), 5000);
+        }
+    </script>
+</body>
+
+</html>
