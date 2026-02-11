@@ -323,26 +323,27 @@
 
     <script>
         const API_ENDPOINT = 'https://api.github.com/repos/pnkproductions7-source/PNK/contents/src/_data/projects';
-
+        
         let currentFile = null;
-        let projects = [];
         let currentToken = localStorage.getItem('github_token') || null;
-
+        let projects = [];
+        
         function setToken() {
             const token = document.getElementById('tokenInput').value.trim();
-
+            
             if (!token) {
                 showAlert('Βάλε το token σου!', 'error');
                 return;
             }
-
+            
             localStorage.setItem('github_token', token);
             currentToken = token;
             document.getElementById('tokenInput').value = '';
-
+            
+            updateTokenStatus(true);
             loadProjects();
         }
-
+        
         function updateTokenStatus(connected) {
             const status = document.getElementById('tokenStatus');
             if (connected) {
@@ -353,200 +354,204 @@
                 status.textContent = '❌ Not connected';
             }
         }
-
-        // Check for token on load
-        window.addEventListener('load', async () => {
+        
+        async function loadProjects() {
+            try {
+                if (!currentToken) {
+                    showAlert('Βάλε το GitHub token σου!', 'error');
+                    return;
+                }
+                
+                const response = await fetch(API_ENDPOINT, {
+                    headers: { 'Authorization': `token ${currentToken}` }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load projects: ' + response.status);
+                }
+                
+                const files = await response.json();
+                projects = files.filter(f => f.name.endsWith('.json') && !f.name.includes('placeholder'));
+                
+                renderProjectsList();
+                showAlert('✅ Projects φορτώθηκαν!', 'success');
+            } catch (error) {
+                showAlert('Σφάλμα φόρτωσης projects: ' + error.message, 'error');
+            }
+        }
+        
+        function renderProjectsList() {
+            const list = document.getElementById('projectsList');
+            if (projects.length === 0) {
+                list.innerHTML = '<p style="color: #999;">Κανένα project ακόμα. Δημιούργησε ένα καινούργιο!</p>';
+                return;
+            }
+            
+            list.innerHTML = projects.map((p) => `
+                <div class="project-item" onclick="loadProject('${p.name}')" data-file="${p.name}">
+                    <strong>${p.name.replace('.json', '').replace(/artistic-|music-|mystery-|promo-/g, '')}</strong>
+                </div>
+            `).join('');
+        }
+        
+        async function loadProject(filename) {
+            try {
+                const response = await fetch(`${API_ENDPOINT}/${filename}`, {
+                    headers: { 'Authorization': `token ${currentToken}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load project');
+                
+                const data = await response.json();
+                const project = JSON.parse(atob(data.content));
+                
+                currentFile = filename;
+                document.getElementById('category').value = project.category || '';
+                document.getElementById('title').value = project.title || '';
+                document.getElementById('description').value = project.description || '';
+                document.getElementById('youtube_url').value = project.youtube_url || '';
+                document.getElementById('order').value = project.order || 1;
+                
+                if (project.thumbnail) {
+                    document.getElementById('imagePreview').innerHTML = `<img src="${project.thumbnail}" alt="preview">`;
+                }
+                
+                document.getElementById('deleteBtn').style.display = 'block';
+                document.querySelectorAll('.project-item').forEach(p => p.classList.remove('active'));
+                document.querySelector(`[data-file="${filename}"]`)?.classList.add('active');
+                
+                showAlert('Project φορτώθηκε!', 'success');
+            } catch (error) {
+                showAlert('Σφάλμα φόρτωσης: ' + error.message, 'error');
+            }
+        }
+        
+        function newProject() {
+            currentFile = null;
+            document.getElementById('projectForm').reset();
+            document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('deleteBtn').style.display = 'none';
+            document.querySelectorAll('.project-item').forEach(p => p.classList.remove('active'));
+        }
+        
+        document.getElementById('projectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const category = document.getElementById('category').value;
+            const title = document.getElementById('title').value;
+            
+            if (!category || !title) {
+                showAlert('Κατηγορία και Τίτλος είναι υποχρεωτικά!', 'error');
+                return;
+            }
+            
+            const project = {
+                category: category,
+                title: title,
+                description: document.getElementById('description').value,
+                youtube_url: document.getElementById('youtube_url').value,
+                order: parseInt(document.getElementById('order').value) || 1,
+                thumbnail: document.getElementById('imagePreview').querySelector('img')?.src || ''
+            };
+            
+            const filename = `${category}-${title.toLowerCase().replace(/\s+/g, '-')}.json`;
+            await saveProject(filename, project);
+        });
+        
+        async function saveProject(filename, projectData) {
+            try {
+                if (!currentToken) {
+                    showAlert('Βάλε το GitHub token σου!', 'error');
+                    return;
+                }
+                
+                const content = btoa(JSON.stringify(projectData, null, 2));
+                
+                let sha = null;
+                if (currentFile) {
+                    const response = await fetch(`${API_ENDPOINT}/${currentFile}`, {
+                        headers: { 'Authorization': `token ${currentToken}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        sha = data.sha;
+                    }
+                }
+                
+                const response = await fetch(`${API_ENDPOINT}/${currentFile || filename}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `${currentFile ? 'Update' : 'Create'} project: ${projectData.title}`,
+                        content: content,
+                        ...(sha && { sha })
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to save');
+                
+                showAlert('✅ Project αποθηκεύθηκε!', 'success');
+                await loadProjects();
+                newProject();
+            } catch (error) {
+                showAlert('Σφάλμα αποθήκευσης: ' + error.message, 'error');
+            }
+        }
+        
+        async function deleteProject() {
+            if (!currentFile || !confirm('Σίγουρα θες να διαγράψεις το project;')) return;
+            
+            try {
+                const response = await fetch(`${API_ENDPOINT}/${currentFile}`, {
+                    headers: { 'Authorization': `token ${currentToken}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to get file info');
+                
+                const data = await response.json();
+                
+                const deleteResponse = await fetch(`${API_ENDPOINT}/${currentFile}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `token ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Delete project: ${currentFile}`,
+                        sha: data.sha
+                    })
+                });
+                
+                if (!deleteResponse.ok) throw new Error('Failed to delete');
+                
+                showAlert('✅ Project διαγράφηκε!', 'success');
+                await loadProjects();
+                newProject();
+            } catch (error) {
+                showAlert('Σφάλμα διαγραφής: ' + error.message, 'error');
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type}`;
+            setTimeout(() => alert.className = 'alert', 5000);
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', () => {
             if (currentToken) {
                 updateTokenStatus(true);
-                await loadProjects();
+                loadProjects();
             } else {
                 updateTokenStatus(false);
                 document.getElementById('projectsList').innerHTML = '<p style="color: #999;">Βάλε το GitHub token σου παραπάνω για να φορτώσεις τα projects</p>';
-
-                async function loadProjects() {
-                    try {
-                        if (!currentToken) {
-                            showAlert('Βάλε το GitHub token σου!', 'error');
-                            return;
-                        }
-
-                        const response = await fetch(API_ENDPOINT, {
-                            headers: { 'Authorization': `token ${currentToken}` }
-                        });
-
-                        if (!response.ok) throw new Error('Failed to load projects');
-
-                        const files = await response.json();
-                        projects = files.filter(f => f.name.endsWith('.json') && !f.name.includes('placeholder'));
-
-                        renderProjectsList();
-                    } catch (error) {
-                        showAlert('Σφάλμα φόρτωσης projects: ' + error.message, 'error');
-                    }
-                }
-
-                function renderProjectsList() {
-                    const list = document.getElementById('projectsList');
-                    if (projects.length === 0) {
-                        list.innerHTML = '<p style="color: #999;">Κανένα project ακόμα. Δημιούργησε ένα καινούργιο!</p>';
-                        return;
-                    }
-
-                    list.innerHTML = projects.map((p, i) => `
-                <div class="project-item" onclick="loadProject('${p.name}')" data-file="${p.name}">
-                    <strong>${p.name.replace('.json', '').replace('artistic-', '').replace('music-', '').replace('mystery-', '').replace('promo-', '')}</strong>
-                </div>
-            `).join('');
-                }
-
-                async function loadProject(filename) {
-                    try {
-                        const response = await fetch(`${API_ENDPOINT}/${filename}`, {
-                            headers: { 'Authorization': `token ${currentToken}` }
-                        });
-
-                        if (!response.ok) throw new Error('Failed to load project');
-
-                        const data = await response.json();
-                        const project = JSON.parse(atob(data.content));
-
-                        currentFile = filename;
-                        document.getElementById('category').value = project.category || '';
-                        document.getElementById('title').value = project.title || '';
-                        document.getElementById('description').value = project.description || '';
-                        document.getElementById('youtube_url').value = project.youtube_url || '';
-                        document.getElementById('order').value = project.order || 1;
-
-                        if (project.thumbnail) {
-                            document.getElementById('imagePreview').innerHTML = `<img src="${project.thumbnail}" alt="preview">`;
-                        }
-
-                        document.getElementById('deleteBtn').style.display = 'block';
-                        document.querySelectorAll('.project-item').forEach(p => p.classList.remove('active'));
-                        document.querySelector(`[data-file="${filename}"]`)?.classList.add('active');
-
-                        showAlert('Project φορτώθηκε!', 'success');
-                    } catch (error) {
-                        showAlert('Σφάλμα φόρτωσης: ' + error.message, 'error');
-                    }
-                }
-
-                function newProject() {
-                    currentFile = null;
-                    document.getElementById('projectForm').reset();
-                    document.getElementById('imagePreview').innerHTML = '';
-                    document.getElementById('deleteBtn').style.display = 'none';
-                    document.querySelectorAll('.project-item').forEach(p => p.classList.remove('active'));
-                }
-
-                document.getElementById('projectForm').addEventListener('submit', async (e) => {
-                    e.preventDefault();
-
-                    const category = document.getElementById('category').value;
-                    const title = document.getElementById('title').value;
-
-                    if (!category || !title) {
-                        showAlert('Κατηγορία και Τίτλος είναι υποχρεωτικά!', 'error');
-                        return;
-                    }
-
-                    const project = {
-                        category: category,
-                        title: title,
-                        description: document.getElementById('description').value,
-                        youtube_url: document.getElementById('youtube_url').value,
-                        order: parseInt(document.getElementById('order').value) || 1,
-                        thumbnail: document.getElementById('imagePreview').querySelector('img')?.src || ''
-                    };
-
-                    const filename = `${category}-${title.toLowerCase().replace(/\s+/g, '-')}.json`;
-                    await saveProject(filename, project);
-                });
-
-                async function saveProject(filename, projectData) {
-                    try {
-                        if (!currentToken) {
-                            showAlert('Βάλε το GitHub token σου!', 'error');
-                            return;
-                        }
-
-                        const content = btoa(JSON.stringify(projectData, null, 2));
-                        const url = `${API_ENDPOINT}/${filename}`;
-
-                        let sha = null;
-                        if (currentFile) {
-                            const response = await fetch(`${API_ENDPOINT}/${currentFile}`, {
-                                headers: { 'Authorization': `token ${currentToken}` }
-                            });
-                            if (response.ok) {
-                                const data = await response.json();
-                                sha = data.sha;
-                            }
-                        }
-
-                        const response = await fetch(`${API_ENDPOINT}/${currentFile || filename}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Authorization': `token ${currentToken}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                message: `${currentFile ? 'Update' : 'Create'} project: ${projectData.title}`,
-                                content: content,
-                                ...(sha && { sha })
-                            })
-                        });
-
-                        if (!response.ok) throw new Error('Failed to save');
-
-                        showAlert('✅ Project αποθηκεύθηκε!', 'success');
-                        await loadProjects();
-                        newProject();
-                    } catch (error) {
-                        showAlert('Σφάλμα αποθήκευσης: ' + error.message, 'error');
-                    }
-                }
-
-                async function deleteProject() {
-                    if (!currentFile || !confirm('Σίγουρα θες να διαγράψεις το project;')) return;
-
-                    try {
-                        const response = await fetch(`${API_ENDPOINT}/${currentFile}`, {
-                            headers: { 'Authorization': `token ${currentToken}` }
-                        });
-
-                        if (!response.ok) throw new Error('Failed to get file info');
-
-                        const data = await response.json();
-
-                        const deleteResponse = await fetch(`${API_ENDPOINT}/${currentFile}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Authorization': `token ${currentToken}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                message: `Delete project: ${currentFile}`,
-                                sha: data.sha
-                            })
-                        });
-
-                        if (!deleteResponse.ok) throw new Error('Failed to delete');
-
-                        showAlert('✅ Project διαγράφηκε!', 'success');
-                        await loadProjects();
-                        newProject();
-                    } catch (error) {
-                        showAlert('Σφάλμα διαγραφής: ' + error.message, 'error');
-                    }
-                }
-
-                function showAlert(message, type) {
-                    const alert = document.getElementById('alert');
-                    alert.textContent = message;
-                    alert.className = `alert ${type}`;
-                    setTimeout(() => alert.classList.remove(type), 5000);
-                }
+            }
+        });
     </script>
 </body>
 
