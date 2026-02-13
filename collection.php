@@ -27,27 +27,27 @@ $categories = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./src/css/style.css">
     <title>PNK Video Productions - Gallery</title>
 </head>
 <body>
 
     <nav class="mobile-nav">
         <div class="nav-inner">
-            <a href="/index.html" class="logo-link">
-                <img src="/static/img/logos/pnk-logo.png" alt="Logo" class="logo">
+            <a href="index.html" class="logo-link">
+                <img src="./static/img/logos/pnk-logo.png" alt="Logo" class="logo">
             </a>
             <ul class="desktop-menu">
-                <li><a href="/collection.php">Συλλογή</a></li>
-                <li><a href="/contact.html">Επικοινωνία</a></li>
+                <li><a href="collection.php">Συλλογή</a></li>
+                <li><a href="contact.html">Επικοινωνία</a></li>
             </ul>
             <button class="menu-toggle" aria-label="Toggle menu">
-                <img src="/static/img/icons/menu.svg" class="icon hamburger" alt="Open menu">
+                <img src="./static/img/icons/menu.svg" class="icon hamburger" alt="Open menu">
             </button>
             <div class="dropdown-menu">
                 <ul class="menu-items">
-                    <li><a href="/collection.php">Συλλογή</a></li>
-                    <li><a href="/contact.html">Επικοινωνία</a></li>
+                    <li><a href="collection.php">Συλλογή</a></li>
+                    <li><a href="contact.html">Επικοινωνία</a></li>
                 </ul>
             </div>
         </div>
@@ -85,11 +85,11 @@ $categories = [
     <footer class="footer">
         <div class="footer-container">
             <div class="footer-logo">
-                <img src="/static/img/logos/logo.jpg" alt="PNK Logo" class="logo">
+                <img src="./static/img/logos/logo.jpg" alt="PNK Logo" class="logo">
             </div>
             <div class="social-icons">
-                <a href="https://www.facebook.com/..." target="_blank" class="social-link"><div class="icon-circle"><img src="/static/img/icons/facebook.svg" alt="Facebook"></div></a>
-                <a href="https://www.instagram.com/..." target="_blank" class="social-link"><div class="icon-circle"><img src="/static/img/icons/instagram.svg" alt="Instagram"></div></a>
+                <a href="https://www.facebook.com/..." target="_blank" class="social-link"><div class="icon-circle"><img src="./static/img/icons/facebook.svg" alt="Facebook"></div></a>
+                <a href="https://www.instagram.com/..." target="_blank" class="social-link"><div class="icon-circle"><img src="./static/img/icons/instagram.svg" alt="Instagram"></div></a>
             </div>
             <div class="footer-copyright">
                 © <?php echo date("Y"); ?> PNK Video Productions. All rights reserved.
@@ -98,6 +98,6 @@ $categories = [
     </footer>
 
     <script src="test.js"></script>
-    <script src="/src/js/nav.js"></script>
+    <script src="./src/js/nav.js"></script>
 </body>
 </html>
