@@ -760,6 +760,12 @@
     gap: 2.5rem;
 }
 
+@media (min-width: 769px) {
+    .gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 /* CARD */
 .gallery-item {
     background: #111;
@@ -797,12 +803,4 @@
     height: 100%;
     border: none;
     /* Remove any default borders */
-}
-
-@media (max-width: 768px) {
-    .gallery-grid {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        /* Smaller min for mobile */
-        gap: 1.5rem;
-    }
 }
